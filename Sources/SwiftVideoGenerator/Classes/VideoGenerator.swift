@@ -581,27 +581,32 @@ public class VideoGenerator: NSObject {
     type = _type
     audioURLs = _audios
     
-    if self.type == .single {
-      if let _image = VideoGenerator.shouldOptimiseImageForVideo ? _images.first?.resizeImageToVideoSize() : _images.first {
-        self.images = [UIImage](repeating: _image, count: 2)
-      }
-    } else {
-      
-      for _image in _images {
-        autoreleasepool {
-          if let imageData = _image.scaleImageToSize(newSize: CGSize(width: VideoGenerator.videoImageWidthForMultipleVideoGeneration, height: VideoGenerator.videoImageWidthForMultipleVideoGeneration))?.pngData() {
-            datasImages.append(imageData)
-          }
+    switch type {
+    case .single:
+        if let _image = VideoGenerator.shouldOptimiseImageForVideo ? _images.first?.resizeImageToVideoSize() : _images.first {
+            self.images = [UIImage](repeating: _image, count: 2)
         }
-      }
-      
-      datasImages.forEach {
-        if let imageData = $0, let image = UIImage(data: imageData, scale: UIScreen.main.scale) {
-          self.images.append(image)
+    case .singleAudioMultipleImage:
+        self.images = _images.compactMap { image in
+            autoreleasepool {
+                let resizedImage = VideoGenerator.shouldOptimiseImageForVideo ? image.resizeImageToDefaultSize() : image.scaleImageToSize(newSize: CGSize(width: VideoGenerator.videoImageWidthForMultipleVideoGeneration, height: VideoGenerator.videoImageWidthForMultipleVideoGeneration))
+                return resizedImage
+            }
         }
-      }
-      
-      datasImages.removeAll()
+    default:
+        for _image in _images {
+            autoreleasepool {
+                if let imageData = _image.scaleImageToSize(newSize: CGSize(width: VideoGenerator.videoImageWidthForMultipleVideoGeneration, height: VideoGenerator.videoImageWidthForMultipleVideoGeneration))?.pngData() {
+                    datasImages.append(imageData)
+                }
+            }
+        }
+        datasImages.forEach {
+            if let imageData = $0, let image = UIImage(data: imageData, scale: UIScreen.main.scale) {
+                self.images.append(image)
+            }
+        }
+        datasImages.removeAll()
     }
     
     switch type! {

@@ -93,4 +93,36 @@ extension UIImage {
       return nil
     }
   }
+
+  /// Method to get a size for the image appropriate for video (dividing by 16 without overlapping 1200)
+  ///
+  /// - Returns: a size fit for video
+  func resizeImageToDefaultSize() -> UIImage? {
+      let scale = UIScreen.main.scale
+      var imageWidth = 16 * ((size.width / scale) / 16).rounded(.awayFromZero)
+      var imageHeight = 16 * ((size.height / scale) / 16).rounded(.awayFromZero)
+      var ratio: CGFloat!
+
+      if imageWidth > 1400 {
+          ratio = 1400 / imageWidth
+      } else if imageWidth < 800 {
+          ratio = 800 / imageWidth
+      } else if imageHeight > 1200 {
+          ratio = 1200 / imageHeight
+      }
+
+      imageWidth = 16 * (imageWidth / 16).rounded(.towardZero) * ratio
+      imageHeight = 16 * (imageHeight / 16).rounded(.towardZero) * ratio
+
+      let size = CGSize(width: imageWidth, height: imageHeight)
+
+      UIGraphicsBeginImageContextWithOptions(size, false, scale)
+      draw(in: CGRectMake(0, 0, size.width, size.height))
+      
+      if let normalizedImage = UIGraphicsGetImageFromCurrentImageContext() {
+          UIGraphicsEndImageContext()
+          return normalizedImage
+      }
+      return nil
+  }
 }
